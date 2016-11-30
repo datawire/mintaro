@@ -4,24 +4,35 @@ When you're running a distributed system debugging problems is hard: an error in
 In order to debug these problems you want both message transcripts and application logs.
 Logging all traffic can be quite expensive, however.
 
+Mintaro solves this problem: it allows you to efficiently capture full debug and traffic logs from your entire service network whenever an error occurs anywhere.
+
 ## Mintaro: debugging signal, without the noise
 
-Mintaro is like Sentry for distributed systems: showing you only the information you need to debug a problem.
-
+Mintaro shows you all the information you need to debug a problem in your distributed system, both network traffic and logs.
 By configuring Mintaro on your servers you can capture all message traffic and logs that relate to a particular error or an abnormally slow request.
-Since only traces that have errors are sent to the Mintaro central server, Mintaro has much lower performance and bandwidth costs compared to systems that store all traffic.
 
-### How it works
+Traces of message traffic through the system are used to correlate messages and logs for a particular user request.
+Mintaro only sends traces that have errors to the central server... but it sends the messages and logs from all of your servers that participated in the trace, even if the error was occurred elsewhere.
+
+This is why Mintaro is so useful:
+
+* Mintaro shows you *all* the information for a particular error, from an incoming user request to all messaging and logging that led up to the error, across all participating servers.
+* Mintaro shows you *only* the information you need to debug a problem, the specific messages and logs for a particular error.
+  All signal, no noise.
+* Mintaro has much lower performance and bandwidth costs compared to systems that store all traffic.
+* Since Mintaro is only sending information on traces with errors, you can configure it to send fine-grained debug logging that you would never be able to send to a normal centralized log store.
+
+### How does it work?
 
 Mintaro provides a client SDK which integrates with common web frameworks like Express.js, Sinatra, Django and Spring.
-The SDK stores recent HTTP messaging and logs locally, alongside your service.
+The SDK stores recent HTTP messaging and logs in a high-performance low overhead local data structure, keeping only recent activity.
 
 <img src="ErrorReporting/distributed_logs.png" width="600">
 
 Additionally, the Mintaro SDK allows you to use a trace ID to trace traffic as it flows through your system, so that specific requests and logs can be tied to a particular trace.
 
-When an error occurs or a distributed trace takes too long, the Mintaro SDK notifies a central server that a specific trace had an error, and the central server then notifies all of your services integrated with Mintaro.
-Your services then send all HTTP request/response traffic and application log messages for that particular trace to the central server.
+When an error occurs anywhere in the system, or a distributed trace takes too long, the Mintaro SDK notifies a central server that a specific trace had an error.
+The central server then retrieves high fidelity message HTTP request/response traffic and application log messages for that particular trace from the rest of the network of services.
 
 When you log in to the Mintaro control UI you will therefore see full message and log traces only for distributed operations that resulted in errors.
 
